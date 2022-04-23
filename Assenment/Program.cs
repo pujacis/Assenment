@@ -9,7 +9,7 @@ var connectionString = builder.Configuration.GetConnectionString("conn");;
 builder.Services.AddDbContext<AssenmentContext>(options =>
     options.UseSqlServer(connectionString));;
 
-builder.Services.AddDefaultIdentity<AssenmentUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<AssenmentUser>(options => options.SignIn.RequireConfirmedAccount = true).AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AssenmentContext>();;
 
 // Add services to the container.

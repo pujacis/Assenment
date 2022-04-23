@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Assenment.Areas.Identity.Pages.Account
 {
@@ -30,13 +31,16 @@ namespace Assenment.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<AssenmentUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly RoleManager<IdentityRole> _roleManager;
+
 
         public RegisterModel(
             UserManager<AssenmentUser> userManager,
             IUserStore<AssenmentUser> userStore,
             SignInManager<AssenmentUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+              RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -44,6 +48,7 @@ namespace Assenment.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _roleManager = roleManager;
         }
 
         /// <summary>
@@ -71,6 +76,7 @@ namespace Assenment.Areas.Identity.Pages.Account
         /// </summary>
         public class InputModel
         {
+            public string RoleId { get; set; }
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
@@ -103,6 +109,16 @@ namespace Assenment.Areas.Identity.Pages.Account
 
         public async Task OnGetAsync(string returnUrl = null)
         {
+            var roles = _roleManager.Roles.ToList();
+            List<SelectListItem> selectListItems = new List<SelectListItem>();
+            foreach (var role in roles)
+            {
+                SelectListItem selectListItem = new SelectListItem();
+                selectListItem.Text = role.Name;
+                selectListItem.Value = role.Id;
+                selectListItems.Add(selectListItem);
+            }
+            ViewData["roles"] = selectListItems;
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
@@ -110,6 +126,7 @@ namespace Assenment.Areas.Identity.Pages.Account
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
+            var role = _roleManager.FindByIdAsync(Input.RoleId).Result;             /////
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
@@ -122,6 +139,7 @@ namespace Assenment.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+                    await _userManager.AddToRoleAsync(user, role.Name);                /////////////
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
