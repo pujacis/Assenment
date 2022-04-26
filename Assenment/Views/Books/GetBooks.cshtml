@@ -7,12 +7,18 @@
 
 <h1>GetBooks</h1>
 
-<p>
+@*<p>
     <a asp-action="AddBook">Create New Book</a>
-</p>
+</p>*@
+@*<button type="button" class="btn btn-primary" data-toggle="ajax-moel" data-target="#addbook" data-url="@Url.Action("AddBook")" >Create</button>
+*@<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" onclick="OpenAddPopup();">Add New Book</button><br /><br />
+@*<table class="table table-bordered table-hover">*@
 <table class="table">
     <thead>
         <tr>
+             <th>
+                @Html.DisplayNameFor(model => model.Id)
+            </th>
             <th>
                 @Html.DisplayNameFor(model => model.BookName)
             </th>
@@ -31,36 +37,294 @@
             <th>
                 @Html.DisplayNameFor(model => model.Discount)
             </th>
-            <th></th>
+            
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.BookName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Author)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Genre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ReleaseDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Discount)
-            </td>
-            <td>
-                <a asp-action="UpdateBook" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="BookDetails" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="DeleteBook" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+
+
     </tbody>
 </table>
+<div class="modal fade" id="AddUpdateModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">×</button>
+                <h4 class="modal-title" id="AddUpdateModelLabel">Add Book</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    @* hidden filed for storing Id *@
+                    <input type="hidden" id="hfpatientId" />
+                    <div class="form-group">
+                       <label for="txtPatientName">BookName</label>
+                        <input type="text" class="form-control" id="txtPatientName" placeholder="BookName" />
+                    </div>
+                    <div class="form-group">
+                        <label for="txtPatientNumber">Author</label>
+                        <input type="text" class="form-control" id="txtPatientNumber" placeholder="Author" />
+                    </div>
+                    <div class="form-group">
+                        <label for="txtPatientEmail">Genre</label>
+                        <input type="email" class="form-control" id="txtPatientEmail" placeholder="Genre" />
+                    </div>
+                    <div class="form-group">
+                        <label for="txtAddress">ReleaseDate</label>
+                        <input type="text" class="form-control" id="txtAddress" placeholder="ReleaseDate" />
+                    </div>
+                    <div class="form-group">
+                        <label for="txtBloodGroup">Price</label>
+                        <input type="text" class="form-control" id="txtBloodGroup" placeholder="Price" />
+                    </div>
+                     <div class="form-group">
+                        <label for="txtBloodGroup">Discount</label>
+                        <input type="text" class="form-control" id="txtDiscount" placeholder="Discount" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnAddpatient" onclick="return AddBook();">Create Book</button>
+                <button type="button" class="btn btn-primary" id="btnUpdatepatient" style="display:none;" onclick="UpdatePatient();">Update Book</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/bootstrap.min.js"></script>
+
+
+<script type="text/javascript">
+    //Load Data in Table when documents is ready
+    $(document).ready(function () {
+        BindpatientData();
+    });
+
+    //Bind Data function which is responoisble for loading all data from database
+    function BindpatientData() {
+        $.ajax({
+            url: "/Books/GetBookList",
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                if (result) {
+                    //itetrate thorugh each record and bind it to td
+                    console.log(result);
+                    var html = '';
+                    $.each(result, function (key, item) {
+                        html += '<tr>';
+                        html += '<td>' + item.id + '</td>';
+                        html += '<td>' + item.bookName + '</td>';
+                        html += '<td>' + item.author + '</td>';
+                        html += '<td>' + item.genre + '</td>';
+                        html += '<td>' + item.releaseDate + '</td>';
+                        html += '<td>' + item.price + '</td>';
+                         html += '<td>' + item.discount + '</td>';
+                        html += '<td><a href="#" onclick="return OpenEditPopup(' + item.id + ')">Edit</a> | <a href="#" onclick="DelelePatient(' + item.id + ')">Delete</a></td>';
+                        html += '</tr>';
+                    });
+                    $('tbody').html(html);
+                }
+
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    //************Adding Record in the database***********
+
+
+    function OpenAddPopup() {
+        //title text
+        $("#AddUpdateModelLabel").text("Add Book")
+        //clear all input
+        ClearAllInput();
+        //open popup
+        $('#AddUpdateModel').modal('show');
+        //show add patient button and hide update button
+        $('#btnUpdatepatient').hide();
+        $('#btnAddpatient').show();
+    }
+
+    //Add Data Function
+    function AddBook() {
+        var res = ValidateUserInput();
+        if (res == false) {
+            return false;
+        }
+        var patientObj = {
+            id: $('#hfpatientId').val(),
+            BookName: $('#txtPatientName').val(),
+            Author: $('#txtPatientNumber').val(),
+            Genre: $('#txtPatientEmail').val(),
+            ReleaseDate: $('#txtAddress').val(),
+            Price: $('#txtBloodGroup').val(),
+            Discount: $('#txtDiscount').val()
+        };
+        $.ajax({
+            url: "/Books/AddBook",
+            data: patientObj,
+            type: "POST",
+            //contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (patientObj) {
+                //populate table with new record
+               
+                //claer all input and hide model popup
+                ClearAllInput();
+                $('#AddUpdateModel').modal('hide');
+
+                BindpatientData();
+                
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+      
+    }
+
+
+
+    function OpenEditPopup(PatienId) {
+        $("#AddUpdateModelLabel").text("Update Patient Detail")
+        ClearAllInput();
+        $.ajax({
+            url: "/Books/UpdateBook?Id=" + Id,
+            typr: "GET",
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (result) {
+                debugger;
+                $("#AddUpdateModelLabel").val("Update Patient Detail")
+                $('#hfpatientId').val(result.Id);
+                $('#txtPatientName').val(result.PatientName);
+                $('#txtPatientNumber').val(result.PatientNumber);
+                $('#txtPatientEmail').val(result.PatientEmail);
+                $('#txtAddress').val(result.Address);
+                $('#txtBloodGroup').val(result.BloodGroup);
+
+                $('#AddUpdateModel').modal('show');
+                $('#btnUpdatepatient').show();
+                $('#btnAddpatient').hide();
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+        return false;
+    }
+
+    //function for updating Patient record
+    function UpdatePatient() {
+        var res = ValidateUserInput();
+        if (res == false) {
+            return false;
+        }
+        var patientObj = {
+            Id: $('#hfpatientId').val(),
+            PatientName: $('#txtPatientName').val(),
+            PatientNumber: $('#txtPatientNumber').val(),
+            PatientEmail: $('#txtPatientEmail').val(),
+            Address: $('#txtAddress').val(),
+            BloodGroup: $('#txtBloodGroup').val(),
+        };
+        if (!patientObj.Id || patientObj.Id<= 0) {
+            alert("Invalid Id!");
+            return false;
+        }
+        $.ajax({
+            url: "/Books/UpdateBook",
+            data: JSON.stringify(patientObj),
+            type: "POST",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                BindpatientData();
+                ClearAllInput();
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+
+    //function for deleting employee's record
+    function DelelePatient(ID) {
+        var ans = confirm("Are you sure you want to delete?");
+        if (ans) {
+            $.ajax({
+                url: "/Books/DeleteBook?id=" + Id,
+                type: "POST",
+                contentType: "application/json;charset=UTF-8",
+                dataType: "json",
+                success: function (result) {
+                    BindpatientData();
+                },
+                error: function (errormessage) {
+                    alert(errormessage.responseText);
+                }
+            });
+        }
+    }
+
+    function ClearAllInput() {
+        $('#AddUpdateModel').modal('hide');
+        $('#hfpatientId').val("");
+        $('#txtPatientName').val("");
+        $('#txtPatientNumber').val("");
+        $('#txtPatientEmail').val("");
+        $('#txtAddress').val("");
+        $('#txtBloodGroup').val("");
+
+        $('#txtPatientName').css('border-color', 'lightgrey');
+        $('#txtPatientNumber').css('border-color', 'lightgrey');
+        $('#txtPatientEmail').css('border-color', 'lightgrey');
+        $('#txtAddress').css('border-color', 'lightgrey');
+        $('#txtBloodGroup').css('border-color', 'lightgrey');
+    }
+    function ValidateUserInput() {
+        var isValid = true;
+        if ($('#txtPatientName').val().trim() == "") {
+            $('#txtPatientName').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtPatientName').css('border-color', 'lightgrey');
+        }
+        if ($('#txtPatientNumber').val().trim() == "") {
+            $('#txtPatientNumber').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtPatientNumber').css('border-color', 'lightgrey');
+        }
+        if ($('#txtPatientEmail').val().trim() == "") {
+            $('#txtPatientEmail').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtPatientEmail').css('border-color', 'lightgrey');
+        }
+        if ($('#txtAddress').val().trim() == "") {
+            $('#txtAddress').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtAddress').css('border-color', 'lightgrey');
+        }
+
+        if ($('#txtBloodGroup').val().trim() == "") {
+            $('#txtBloodGroup').css('border-color', 'Red');
+            isValid = false;
+        }
+        else {
+            $('#txtBloodGroup').css('border-color', 'lightgrey');
+        }
+        return isValid;
+    }
+</script>
