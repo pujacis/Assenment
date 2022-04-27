@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Assessment1.Controllers
 {
@@ -20,7 +21,7 @@ namespace Assessment1.Controllers
         }
         [HttpGet]
         [Authorize(Roles = "Book Seller,Book Owner,Super Admin")]
-        public IActionResult AddBook()
+        public IActionResult AddBooks()
         {
             return View();
         }
@@ -102,6 +103,54 @@ namespace Assessment1.Controllers
                 status = ex.Message;
             }
             return Json(status);
+
+        }
+        public JsonResult DeleteBooks(int id)
+        {
+            string status = "success";
+            try
+            {
+
+                var book = db.PujaBooks.Find(id);
+                db.PujaBooks.Remove(book);
+                db.SaveChanges();
+
+            }
+            catch (Exception ex)
+            {
+                status = ex.Message;
+
+            }
+            return Json(status);
+        }
+        public JsonResult UpdateBooks(PujaBook book)
+        {
+
+            string status = "success";
+            try
+            {
+                db.Entry(book).State = EntityState.Modified;
+                db.SaveChanges();
+
+            }
+            catch (Exception ex)
+            {
+                status = ex.Message;
+
+            }
+            return Json(book);
+        }
+        public JsonResult GetbookbyID(int id)
+        {
+            try
+            {
+                var book = db.PujaBooks.Where(a => a.Id == id).FirstOrDefault();
+                return Json(book);
+            }
+            catch (Exception ex)
+            {
+                return Json(null);
+            }
 
         }
     }

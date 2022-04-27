@@ -145,6 +145,7 @@
         //open popup
         $('#AddUpdateModel').modal('show');
         //show add patient button and hide update button
+
         $('#btnUpdatepatient').hide();
         $('#btnAddpatient').show();
     }
@@ -189,62 +190,73 @@
 
 
 
-    function OpenEditPopup(PatienId) {
-        $("#AddUpdateModelLabel").text("Update Patient Detail")
+    function OpenEditPopup(id) {
+        $("#AddUpdateModelLabel").text("Update Book Detail")
         ClearAllInput();
         $.ajax({
-            url: "/Books/UpdateBook?Id=" + Id,
+            url: "/Books/GetbookbyID?id=" + id,
             typr: "GET",
             contentType: "application/json;charset=UTF-8",
             dataType: "json",
             success: function (result) {
                 debugger;
                 $("#AddUpdateModelLabel").val("Update Patient Detail")
-                $('#hfpatientId').val(result.Id);
-                $('#txtPatientName').val(result.PatientName);
-                $('#txtPatientNumber').val(result.PatientNumber);
-                $('#txtPatientEmail').val(result.PatientEmail);
-                $('#txtAddress').val(result.Address);
-                $('#txtBloodGroup').val(result.BloodGroup);
-
+                $('#hfpatientId').val(result.id);
+                $('#txtPatientName').val(result.bookName);
+                $('#txtPatientNumber').val(result.author);
+                $('#txtPatientEmail').val(result.genre);
+                $('#txtAddress').val(result.releaseDate);
+                $('#txtBloodGroup').val(result.price);
+                 $('#txtDiscount').val(result.discount);
+                   
                 $('#AddUpdateModel').modal('show');
+             
                 $('#btnUpdatepatient').show();
+               
                 $('#btnAddpatient').hide();
+               
             },
+            
             error: function (errormessage) {
                 alert(errormessage.responseText);
             }
+            
         });
+          
         return false;
+        
     }
 
     //function for updating Patient record
     function UpdatePatient() {
         var res = ValidateUserInput();
+        console.log(res);
         if (res == false) {
             return false;
         }
         var patientObj = {
-            Id: $('#hfpatientId').val(),
-            PatientName: $('#txtPatientName').val(),
-            PatientNumber: $('#txtPatientNumber').val(),
-            PatientEmail: $('#txtPatientEmail').val(),
-            Address: $('#txtAddress').val(),
-            BloodGroup: $('#txtBloodGroup').val(),
+            id: $('#hfpatientId').val(),
+            bookName: $('#txtPatientName').val(),
+            author: $('#txtPatientNumber').val(),
+            genre: $('#txtPatientEmail').val(),
+            releaseDate: $('#txtAddress').val(),
+            price: $('#txtBloodGroup').val(),
+             discount: $('#txtDiscount').val(),
         };
-        if (!patientObj.Id || patientObj.Id<= 0) {
+        if (!patientObj.id || patientObj.id<= 0) {
             alert("Invalid Id!");
             return false;
         }
         $.ajax({
-            url: "/Books/UpdateBook",
-            data: JSON.stringify(patientObj),
+            url: "/Books/UpdateBooks",
+            data: patientObj,
             type: "POST",
-            contentType: "application/json;charset=utf-8",
+            //contentType: "application/json;charset=utf-8",
             dataType: "json",
             success: function (result) {
                 BindpatientData();
                 ClearAllInput();
+                
             },
             error: function (errormessage) {
                 alert(errormessage.responseText);
@@ -254,11 +266,11 @@
 
 
     //function for deleting employee's record
-    function DelelePatient(ID) {
+    function DelelePatient(id) {
         var ans = confirm("Are you sure you want to delete?");
         if (ans) {
             $.ajax({
-                url: "/Books/DeleteBook?id=" + Id,
+                url: "/Books/DeleteBooks?id=" + id,
                 type: "POST",
                 contentType: "application/json;charset=UTF-8",
                 dataType: "json",
